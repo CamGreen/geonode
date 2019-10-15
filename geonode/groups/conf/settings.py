@@ -17,25 +17,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 #########################################################################
+from django.conf import settings
 
-default_app_config = 'geonode.groups.apps.GroupsAppConfig'
+try:
+    ACTIVEMEMBERS_GROUP_NAME = settings.ACTIVEMEMBERS_GROUP_NAME
+except AttributeError:
+    ACTIVEMEMBERS_GROUP_NAME = "active-members"
 
 
-def monkey_patch_user():
-    from .conf import settings
-    from .models import GroupProfile
-    from django.contrib.auth import get_user_model
-
-    group_name = settings.ACTIVEMEMBERS_GROUP_NAME
-    groupprofile, created = GroupProfile.objects.get_or_create(
-        slug=group_name)
-    if created:
-        groupprofile.title = "Active Members"
-        groupprofile.access = "private"
-        groupprofile.save()
-
-    User = get_user_model()
-    for _u in User.objects.filter(is_active=True):
-        if not _u.is_anonymous and _u != User.get_anonymous() and \
-        not groupprofile.user_is_member(_u):
-            groupprofile.join(_u)
+MONKEY_PATCH = getattr(settings, 'GROUPS_MONKEY_PATCH', True)

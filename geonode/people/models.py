@@ -269,6 +269,13 @@ def do_login(sender, user, request, **kwargs):
 
         set_session_token(request.session, token)
 
+        from geonode.groups.conf import settings as groups_settings
+        if groups_settings.MONKEY_PATCH:
+            group_name = groups_settings.ACTIVEMEMBERS_GROUP_NAME
+            groupprofile = GroupProfile.objects.filter(slug=group_name).first()
+            if groupprofile and not groupprofile.user_is_member(user):
+                groupprofile.join(user)
+
 
 @on_ogc_backend(geoserver.BACKEND_PACKAGE)
 def do_logout(sender, user, request, **kwargs):
